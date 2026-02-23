@@ -20,7 +20,7 @@
     <script src="Tiny2D.js"></script>
     <script>
         "use strict";
-        var ctx, engine, target, catcher, mousePos = null;
+        var ctx, engine, target, catcher, mousePos = null, canvasEl;
 
         var highscore = 999;
 
@@ -64,13 +64,13 @@
         function init() {
             // エンジン初期化 & イベントハンドラ設定
             engine = new Engine(0, 0, 800, 1000, 0, 0);
-            var canvas = document.getElementById("canvas");
-            canvas.onmousedown = mymousedown;
-            canvas.onmousemove = mymousemove;
-            canvas.onmouseup = mymouseup;
-            canvas.addEventListener('touchstart', mymousedown);
-            canvas.addEventListener('touchmove', mymousemove);
-            canvas.addEventListener('touchend', mymouseup);
+            canvasEl = document.getElementById("canvas");
+            canvasEl.onmousedown = mymousedown;
+            canvasEl.onmousemove = mymousemove;
+            canvasEl.onmouseup = mymouseup;
+            canvasEl.addEventListener('touchstart', mymousedown);
+            canvasEl.addEventListener('touchmove', mymousemove);
+            canvasEl.addEventListener('touchend', mymouseup);
 
             // スコア
             score.forEach(function (s) {
@@ -106,11 +106,23 @@
 
         function go() {
             // その他(Canvas, Timer)の初期化
-            ctx = canvas.getContext("2d");
+            ctx = canvasEl.getContext("2d");
             ctx.font = "20pt Arial";
             ctx.strokeStyle = "blue";
             setInterval(tick, 10);
             document.getElementById("START").style.display = "none";
+        }
+
+        function getPointerPosition(e) {
+            if (!e.touches || !e.touches.length) {
+                return { x: e.offsetX, y: e.offsetY };
+            }
+            e.preventDefault();
+            var rect = canvasEl.getBoundingClientRect();
+            return {
+                x: e.touches[0].clientX - rect.left,
+                y: e.touches[0].clientY - rect.top
+            };
         }
         
 
@@ -130,8 +142,9 @@
         }
 
         function mymousedown(e) {
-            var mouseX = !isNaN(e.offsetX) ? e.offsetX : e.touches[0].clientX;
-            var mouseY = !isNaN(e.offsetY) ? e.offsetY : e.touches[0].clientY;
+            var pointer = getPointerPosition(e);
+            var mouseX = pointer.x;
+            var mouseY = pointer.y;
             for (var i = 0; i < balls.length; i++) {
                 if (balls[i].entity.isHit(mouseX, mouseY)) {
                     target = balls[i].entity;
@@ -142,8 +155,9 @@
         }
 
         function mymousemove(e) {
-            var mouseX = !isNaN(e.offsetX) ? e.offsetX : e.touches[0].clientX;
-            var mouseY = !isNaN(e.offsetY) ? e.offsetY : e.touches[0].clientY;
+            var pointer = getPointerPosition(e);
+            var mouseX = pointer.x;
+            var mouseY = pointer.y;
             if (target) {
                 mousePos = { x: mouseX, y: mouseY };
             }
